@@ -1,12 +1,21 @@
 import pygame
 from circleshape import *
-from constants import PLAYER_RADIUS, PLAYER_TURN_SPEED, PLAYER_SPEED
+from constants import (
+    PLAYER_RADIUS,
+    PLAYER_TURN_SPEED,
+    PLAYER_SPEED,
+    PLAYER_SHOOT_SPEED,
+    SHOT_RADIUS,
+    PLAYER_SHOOT_COOLDOWN,
+)
+from pew import Shot
 
 
 class Player(CircleShape):
     def __init__(self, x, y):
         super().__init__(x, y, PLAYER_RADIUS)
         self.rotation = 0
+        self.shoot_timer = 0
 
     # Define the ship's layout
     def triangle(self):
@@ -28,6 +37,7 @@ class Player(CircleShape):
     # keys a and d make ship spin around
     def update(self, dt):
         keys = pygame.key.get_pressed()
+        self.shoot_timer = self.shoot_timer - dt
 
         if keys[pygame.K_a]:
             self.rotate(-dt)
@@ -37,8 +47,19 @@ class Player(CircleShape):
             self.move(dt)
         if keys[pygame.K_s]:
             self.move(-dt)
+        if keys[pygame.K_SPACE]:
+            if self.shoot_timer <= 0:
+                self.shoot_timer = PLAYER_SHOOT_COOLDOWN
+                self.shoot()
 
     # keys w and s move ship forward and backward
     def move(self, dt):
         forward = pygame.Vector2(0, 1).rotate(self.rotation)
         self.position += forward * PLAYER_SPEED * dt
+
+    def shoot(self):
+        new_shot = Shot(self.position.x, self.position.y, SHOT_RADIUS)
+        new_shot.velocity = (
+            pygame.Vector2(0, 1).rotate(self.rotation) * PLAYER_SHOOT_SPEED
+        )
+        return new_shot
